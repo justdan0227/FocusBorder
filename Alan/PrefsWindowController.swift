@@ -13,6 +13,7 @@ class PrefsWindowController: NSWindowController {
     @IBOutlet weak var darkModeColorWell: NSColorWell!
     @IBOutlet weak var menuBarIconCheckbox: NSButton!
     @IBOutlet weak var hideDockCheckbox: NSButton!
+    @IBOutlet weak var hoverCheckbox: NSButton!
 
     private var appDelegate: AppDelegate? {
         return NSApp.delegate as? AppDelegate
@@ -26,6 +27,7 @@ class PrefsWindowController: NSWindowController {
 
         menuBarIconCheckbox.state = UserDefaults.standard.bool(forKey: Key.showMenuBarIcon) ? .on : .off
         hideDockCheckbox.state = UserDefaults.standard.bool(forKey: Key.hideDock) ? .on : .off
+        hoverCheckbox.state = UserDefaults.standard.bool(forKey: Key.highlightUnderPointer) ? .on : .off
 
         NotificationCenter.default.addObserver(self, selector: #selector(PrefsWindowController.userDefaultsChanged), name: UserDefaults.didChangeNotification, object: nil)
     }
@@ -36,6 +38,11 @@ class PrefsWindowController: NSWindowController {
     
     @IBAction func darkModeChanged(_ sender: NSColorWell) {
         UserDefaults.standard.setColor(sender.color, forKey: Key.darkMode)
+    }
+
+    @IBAction func highlightUnderPointerChanged(_ sender: NSButton) {
+        UserDefaults.standard.set(sender.state == .on, forKey: Key.highlightUnderPointer)
+        FocusHighlighter.shared.modeChanged()
     }
 
     @IBAction func menuBarIconChanged(_ sender: NSButton) {

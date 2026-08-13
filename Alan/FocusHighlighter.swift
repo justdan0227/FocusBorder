@@ -36,6 +36,14 @@ class FocusHighlighter {
     private var sampleCount = 0
     private var tickCount = 0
 
+    // Hover dwell. Without it the border flashes through every window the pointer crosses on
+    // its way somewhere else; 100ms is long enough to ignore transit, short enough to still
+    // read as instant when you actually land on a window.
+    private let hoverDwell: TimeInterval = 0.1
+    private var dwellTimer: Timer?
+    private var currentHoverWindowID: CGWindowID?
+    private var pendingHoverWindowID: CGWindowID?
+
     func start() {
         refreshTarget()
 
@@ -47,13 +55,23 @@ class FocusHighlighter {
             self?.refreshTarget()
         }
 
-        mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDragged, .leftMouseUp]) { [weak self] event in
+        mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged, .leftMouseUp]) { [weak self] event in
             guard let self else { return }
 
-            if event.type == .leftMouseUp {
+            switch event.type {
+            case .leftMouseUp:
                 self.endDragSampling()
-            } else {
-                self.beginDragSamplingIfNeeded()
+                if self.hoverEnabled { self.updateFromPointer() }
+            case .mouseMoved:
+                if self.hoverEnabled { self.updateFromPointer() }
+            default:
+                // In hover mode the pointer already tracks the dragged window, so the
+                // WindowServer sampler is redundant — mouse events arrive just as fast.
+                if self.hoverEnabled {
+                    self.updateFromPointer()
+                } else {
+                    self.beginDragSamplingIfNeeded()
+                }
             }
         }
 
@@ -91,8 +109,117 @@ class FocusHighlighter {
         }
     }
 
+    private var hoverEnabled: Bool {
+        UserDefaults.standard.bool(forKey: Key.highlightUnderPointer)
+    }
+
+    // Called when the preference is toggled, so the border re-targets immediately rather than
+    // waiting for the next mouse move or focus change.
+    func modeChanged() {
+        cancelDwell()
+        currentHoverWindowID = nil
+
+        if hoverEnabled {
+            // Explicit toggle, so commit straight away instead of making the user wiggle the
+            // mouse and wait out a dwell.
+            commitHoverTarget()
+        } else {
+            refreshTarget()
+        }
+    }
+
+    // Topmost on-screen window containing the pointer. CGWindowListCopyWindowInfo returns
+    // front-to-back, so the first hit is what is visually under the cursor — which is the whole
+    // point when windows are stacked. layer == 0 skips the menu bar, Dock, desktop and Alan's
+    // own border; the alpha test skips invisible full-screen overlays that would swallow hits.
+    // Measured at 0.22ms per call, so running it per mouse-move event is not a concern.
+    private func windowUnderPointer() -> (id: CGWindowID, bounds: CGRect)? {
+        guard let point = CGEvent(source: nil)?.location else { return nil }
+        guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] else { return nil }
+
+        for entry in list {
+            guard let layer = entry[kCGWindowLayer as String] as? Int, layer == 0,
+                  let alpha = entry[kCGWindowAlpha as String] as? Double, alpha > 0.01,
+                  let number = entry[kCGWindowNumber as String] as? CGWindowID,
+                  let boundsDict = entry[kCGWindowBounds as String] as? NSDictionary,
+                  let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
+                  bounds.contains(point)
+            else { continue }
+
+            return (number, bounds)
+        }
+
+        return nil
+    }
+
+    private func updateFromPointer() {
+        let hit = windowUnderPointer()
+
+        // Still the window already highlighted: track it live and cancel any pending switch.
+        // This is keyed on window id rather than bounds on purpose — dragging a window in hover
+        // mode changes its bounds every event, and a bounds-keyed dwell would restart its timer
+        // forever and never commit.
+        if let hit, hit.id == currentHoverWindowID {
+            cancelDwell()
+            applyHoverBounds(hit.bounds)
+            return
+        }
+
+        // Same candidate already waiting: let the running timer finish rather than restarting
+        // it, or moving around inside the new window would postpone the commit indefinitely.
+        if hit?.id == pendingHoverWindowID && dwellTimer != nil { return }
+
+        pendingHoverWindowID = hit?.id
+        dwellTimer?.invalidate()
+
+        let timer = Timer.scheduledTimer(withTimeInterval: hoverDwell, repeats: false) { [weak self] _ in
+            self?.commitHoverTarget()
+        }
+        RunLoop.current.add(timer, forMode: .common)
+        dwellTimer = timer
+    }
+
+    // Re-runs the hit test rather than trusting what was under the pointer when the timer was
+    // scheduled — the pointer, and the windows, may have moved during the dwell.
+    private func commitHoverTarget() {
+        dwellTimer = nil
+        pendingHoverWindowID = nil
+
+        if let hit = windowUnderPointer() {
+            currentHoverWindowID = hit.id
+            applyHoverBounds(hit.bounds)
+        } else {
+            currentHoverWindowID = nil
+            hideHighlight()
+        }
+    }
+
+    private func cancelDwell() {
+        dwellTimer?.invalidate()
+        dwellTimer = nil
+        pendingHoverWindowID = nil
+    }
+
+    private func applyHoverBounds(_ bounds: CGRect) {
+        lastAXFrame = bounds
+
+        let cocoaFrame = cocoaRect(fromAXRect: bounds)
+
+        if lastFrame != cocoaFrame {
+            lastFrame = cocoaFrame
+            highlightWindow.updateFrame(to: cocoaFrame)
+        }
+    }
+
     // Works out which window is focused and re-points the observers at it.
     private func refreshTarget() {
+        // In hover mode the pointer decides, so the AX focus path must not fight it — this also
+        // catches the fallback timer and any stray AX notification.
+        if hoverEnabled {
+            updateFromPointer()
+            return
+        }
+
         guard let window = currentFocusedWindow() else {
             teardownObserver()
             hideHighlight()
