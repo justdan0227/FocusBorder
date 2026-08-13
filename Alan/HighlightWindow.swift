@@ -28,11 +28,28 @@ class HighlightWindow: NSWindow {
         self.contentView = HighlightView(frame: .zero)
     }
     
-    func updateFrame(to rect: CGRect) {
+    // Hot path during a drag. A window that only moves needs no redraw at all — the stroke is
+    // laid out in bounds coordinates, so it is identical at the new origin. Forcing a
+    // synchronous full-window redraw here is what made the border trail the drag.
+    func updateFrame(to rect: CGRect, raise: Bool = false) {
         let newRect = rect.insetBy(dx: -2, dy: -2)
-        setFrame(newRect, display: true)
-        self.contentView?.setNeedsDisplay(.infinite)
-        orderFrontRegardless()
+        let resized = newRect.size != frame.size
+
+        setFrame(newRect, display: resized)
+
+        if resized {
+            contentView?.setNeedsDisplay(.infinite)
+        }
+
+        // Re-ordering on every move event is likewise wasted work; .statusBar level already
+        // keeps the border above ordinary windows between focus changes.
+        if raise || !isVisible {
+            orderFrontRegardless()
+        }
+    }
+
+    func redraw() {
+        contentView?.setNeedsDisplay(.infinite)
     }
 }
 
