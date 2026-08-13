@@ -134,6 +134,24 @@ and **Hide from Dock** (`hideDock`, default false). Both apply live via
 would leave a running app with no way to open Preferences or quit it, short of Activity
 Monitor. Whichever setting the user did not just touch is forced back on.
 
+**Highlight window under pointer** (`highlightUnderPointer`, default false) switches the border
+from following keyboard focus to following the pointer — the point being to find a window
+buried under others. `windowUnderPointer()` takes the first `layer == 0`, non-transparent
+window containing the cursor from the front-to-back `CGWindowListCopyWindowInfo` ordering.
+Measured at 0.22ms per call, so running it per mouse-move event is not a concern; the `layer`
+and alpha filters are what keep the menu bar, Dock, desktop, Alan's own border, and invisible
+full-screen overlays from swallowing every hit.
+
+While hover mode is on, `refreshTarget()` returns early into `updateFromPointer()` so the AX
+focus path cannot fight the pointer, and the drag sampler is skipped entirely — mouse events
+already arrive faster than it would sample.
+
+The 100ms dwell (`hoverDwell`) stops the border flashing through every window the pointer
+merely crosses. **It is keyed on window id, not bounds, and that is not incidental:** dragging
+a window changes its bounds on every event, so a bounds-keyed dwell would restart its timer
+forever and never commit — the border would freeze for the whole drag. Staying inside one
+window tracks it live; only switching windows waits.
+
 Adding a row to the prefs grid means adding a `gridRow` plus one `gridCell` per column (three),
 even for empty cells, and growing the window's `contentRect` — the window is not resizable, so
 a too-short window silently clips the new row.
@@ -154,3 +172,25 @@ comment block; match that style when adding files. The AX code in
 `FocusHighlighter.currentFocusedWindowFrame()` uses force-casts on `CFTypeRef` — that's the
 prevailing idiom here, but any change to it should keep the existing guard-and-return-nil
 error handling rather than crashing on an unexpected attribute type.
+
+## Relationship to upstream
+
+`origin` is `tylerhall/Alan` — the original author's repo, not a fork you can push to. All work
+here is local commits on `main`. Upstream was last seen at `ebdaad7`.
+
+Some commits are **fork-local and must never be sent upstream**:
+
+- `f17569c` (signing) — points `DEVELOPMENT_TEAM` at `4KGAF7A4WR` and renames the bundle to
+  `com.iclassicnu.Alan`. Upstream this would sign the maintainer's app with the wrong team and
+  orphan every existing user's Accessibility grant and preferences domain.
+- `CLAUDE.md` — this file.
+- The `Key.width` default of 1 (upstream ships 5). Taste, not a fix, and currently tangled
+  inside the menu bar commit `967f654` rather than standing alone.
+- The `os.Logger` diagnostics — the subsystem is hardcoded to `com.iclassicnu.Alan`. Strip them
+  or derive from `Bundle.main.bundleIdentifier` before any upstream branch.
+
+A PR-able branch is therefore `d19c7f6` + `58fdcae` (the drag lag fix) cherry-picked onto
+`ebdaad7` with the logging removed — roughly +180 lines in two files. The measured ~10Hz AX
+finding in `58fdcae`'s commit message is the substance of that contribution. Note the upstream
+README describes the project as "more software satire than useful utility", so open an issue
+and ask before investing in a PR.
