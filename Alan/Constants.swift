@@ -16,6 +16,7 @@ struct Key {
     static let width = "width"
     static let inset = "inset"
     static let hideDock = "hideDock"
+    static let showMenuBarIcon = "showMenuBarIcon"
     static let lightMode = "lightMode"
     static let darkMode = "darkMode"
 }
