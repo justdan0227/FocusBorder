@@ -41,11 +41,57 @@ always this, not a code bug.
 
 The whole app is four moving parts:
 
-- `FocusHighlighter` (singleton) — the engine. It **polls** the Accessibility API on a 0.1s
-  `Timer` rather than subscribing to AX notifications; each tick reads
-  `kAXFocusedUIElementAttribute` off the system-wide element, walks up to its `kAXWindow`,
-  reads `AXFrame`, and only touches the window when the frame actually changed. If no focused
-  frame can be read, the highlight is ordered out.
+- `FocusHighlighter` (singleton) — the engine, driven by `AXObserver` notifications. An
+  observer is created per focused-app pid; app-level notifications
+  (`kAXFocusedWindowChanged`, `kAXFocusedUIElementChanged`, miniaturize/deminiaturize) trigger
+  `refreshTarget()`, which re-resolves the focused window and re-points the observers, while
+  `kAXWindowMoved`/`kAXWindowResized` on the window itself take a hot path that only recomputes
+  the frame. `NSWorkspace.didActivateApplicationNotification` covers app switches.
+
+  Two details are load-bearing. The run loop source is added with **`.commonModes`** — with
+  `.defaultMode` the border freezes mid-drag, because dragging runs the main loop in event
+  tracking mode. And `focusObserverCallback` must stay a `nonisolated` global function, since
+  `AXObserverCreate` takes a C function pointer, which a `@MainActor` function cannot convert
+  to; it re-enters isolation via `MainActor.assumeIsolated`.
+
+  A 0.5s `fallbackTimer` remains as a safety net for apps that never emit AX move/resize
+  notifications and for Space/display changes, which are not reported at all. **If dragging
+  ever feels laggy again at roughly half-second granularity, the observers failed to register
+  and the fallback is carrying it** — that is the symptom to look for, not a reason to speed
+  the timer back up.
+
+### Why drags do not use the AX path
+
+**AX move notifications are coalesced to ~10Hz system-wide.** This was measured, not guessed:
+Finder delivered them at exactly 100ms intervals (10.0Hz) and Warp at 117ms (8.5Hz). That cap
+is the reason the border visibly trailed a dragged window, and it is unfixable from the AX
+side — an earlier attempt replaced 0.1s polling with observers and changed nothing, because
+both land at ~10Hz.
+
+So while the left mouse button is down, position comes from the **WindowServer** instead. A
+global `NSEvent` monitor starts a 120Hz sampler on the first `.leftMouseDragged`;
+`resolveDraggedWindowID()` matches the tracked AX window to a `CGWindowID` by pid and geometry
+(no private API), and each tick reads bounds via
+`CGWindowListCopyWindowInfo([.optionIncludingWindow], id)`. Measured at ~117Hz sustained with a
+100% lookup rate. On `.leftMouseUp` the sampler stops and AX becomes authoritative again.
+
+Two traps, both of which cost a debugging round:
+
+- **Do not use `CGWindowListCreateDescriptionFromArray`.** It wants window ids as raw pointer
+  values; `[windowID] as CFArray` bridges them to `CFNumber`s, so it silently returns nothing.
+  The symptom is nastier than a plain failure — starting the sampler suppresses the AX path, so
+  a silently-failing sampler freezes the border until mouse-up.
+- Only geometry keys are read from the window list. Reading `kCGWindowName` would drag in a
+  Screen Recording permission prompt for no benefit.
+
+The `os.Logger` calls under subsystem `com.iclassicnu.Alan` are deliberately kept for this —
+drag start, sample/tick counts, and observer registration results. They are what turned two
+rounds of guessing into a measurement:
+
+```bash
+# note: /usr/bin/log — zsh has its own `log` builtin that shadows it
+/usr/bin/log show --last 5m --info --predicate 'subsystem == "com.iclassicnu.Alan"' --style compact
+```
 - Coordinate flip — AX rects are top-left-origin across the whole display arrangement; Cocoa
   is bottom-left. `cocoaRect(fromAXRect:)` flips Y using `max` of all `NSScreen.frame.maxY`,
   not the main screen's height. This is deliberate: using the main screen breaks windows on
