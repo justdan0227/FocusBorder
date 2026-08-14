@@ -7,8 +7,8 @@
 
 import AppKit
 
-class PrefsWindowController: NSWindowController {
-    
+class PrefsWindowController: NSWindowController, NSWindowDelegate {
+
     @IBOutlet weak var lightModeSwatches: ColorSwatchPicker!
     @IBOutlet weak var darkModeSwatches: ColorSwatchPicker!
     @IBOutlet weak var menuBarIconCheckbox: NSButton!
@@ -39,9 +39,22 @@ class PrefsWindowController: NSWindowController {
 
         shortcutButton.shortcut = Shortcut.load()
 
+        window?.delegate = self
+
         NotificationCenter.default.addObserver(self, selector: #selector(PrefsWindowController.userDefaultsChanged), name: UserDefaults.didChangeNotification, object: nil)
     }
     
+    // This is the app's only window, so holding activation after it closes leaves FocusBorder
+    // frontmost with nothing on screen. That is not merely untidy: mouse-moved events go to the
+    // active app alone, so while FocusBorder holds activation the global monitor that drives
+    // hover mode receives nothing at all. Handing activation back is the real fix; the polled
+    // cursor comparison in FocusHighlighter.updateFromPointer is the backstop for every other
+    // way the app can end up active. `deactivate` rather than `hide(_:)` — hiding would order
+    // out the border window too.
+    func windowWillClose(_ notification: Notification) {
+        NSApp.deactivate()
+    }
+
     @IBAction func lightModeChanged(_ sender: ColorSwatchPicker) {
         guard let color = sender.selectedColor else { return }
         UserDefaults.standard.setColor(color, forKey: Key.lightMode)

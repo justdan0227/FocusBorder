@@ -60,6 +60,7 @@ class FocusHighlighter {
     private var hoverIdleTimer: Timer?
     private var hoverSuppressed = false
     private var lastPointerMoveTime: TimeInterval = 0
+    private var lastPointerLocation: CGPoint?
 
     private var hideAfterSeconds: Int {
         UserDefaults.standard.integer(forKey: Key.hideAfterSeconds)
@@ -204,8 +205,8 @@ class FocusHighlighter {
     // point when windows are stacked. layer == 0 skips the menu bar, Dock, desktop and FocusBorder's
     // own border; the alpha test skips invisible full-screen overlays that would swallow hits.
     // Measured at 0.22ms per call, so running it per mouse-move event is not a concern.
-    private func windowUnderPointer() -> (id: CGWindowID, bounds: CGRect)? {
-        guard let point = CGEvent(source: nil)?.location else { return nil }
+    private func windowUnderPointer(at point: CGPoint? = nil) -> (id: CGWindowID, bounds: CGRect)? {
+        guard let point = point ?? CGEvent(source: nil)?.location else { return nil }
         guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] else { return nil }
 
         for entry in list {
@@ -226,17 +227,32 @@ class FocusHighlighter {
     // `pointerMoved` separates the two kinds of caller. Real mouse events pass true: they wake an
     // idle-hidden border and restart the countdown. The 0.5s fallback poll passes false, and must
     // not — otherwise it would resurrect the border twice a second and the hide would never stick.
+    //
+    // The flag is only a proxy for "did the pointer move", though, and it is not a reliable one:
+    // a global NSEvent monitor sees mouse-moved events only while they are being delivered to
+    // *another* application, and macOS routes them to the active app alone. So whenever
+    // FocusBorder itself is active — Preferences open, or just closed without activation being
+    // handed back — the monitor goes silent, and an idle-hidden border could never come back.
+    // Comparing the polled cursor position is the direct measurement, so the fallback poll can
+    // wake the border when the pointer really has moved and still leave it hidden when it hasn't.
     private func updateFromPointer(pointerMoved: Bool = false) {
         guard isEnabled else { return }
 
-        if pointerMoved {
+        let point = CGEvent(source: nil)?.location
+        var moved = pointerMoved
+        if !moved, let point, let last = lastPointerLocation, point != last {
+            moved = true
+        }
+        lastPointerLocation = point
+
+        if moved {
             hoverSuppressed = false
             noteHoverPointerMoved()
         } else if hoverSuppressed {
             return
         }
 
-        let hit = windowUnderPointer()
+        let hit = point.flatMap(windowUnderPointer(at:))
 
         // Still the window already highlighted: track it live and cancel any pending switch.
         // This is keyed on window id rather than bounds on purpose — dragging a window in hover
