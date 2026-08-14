@@ -295,3 +295,43 @@ because a binary is a "copy of the Software" too.
 The bundle id divergence is load-bearing here rather than incidental: `com.iclassicnu.Alan` lets
 this build and upstream's coexist without either taking over the other's Accessibility grant or
 preferences domain. Do not "fix" it back to `studio.retina.Alan`.
+
+Published as **https://github.com/justdan0227/FocusBorder** (public, standalone — not a GitHub
+fork). `origin` is that repo; `upstream` is `tylerhall/Alan`, fetch-only. Pushed as `justdan0227`
+with `dan@kardell.org`; there is no repo-local git identity override and none is wanted.
+
+The team id remains in history in `project.pbxproj` before `c85e935`, and that history is now
+public. Team ids ship inside every signed app, so this was judged low-sensitivity and left alone
+rather than force-pushing a rewrite.
+
+## Pending: rename the app to FocusBorder
+
+Only the *repository* is currently named FocusBorder. The app, target, `Alan.xcodeproj` and the
+`Alan/` source directory still carry the original name — the initial decision was to leave them,
+so that Tyler's name stayed on what he built, and the README says exactly that. **That decision
+was reversed; the next session should rename everything.** Undo the README paragraph that
+promises the app stays called Alan.
+
+Not yet started, so nothing is half-renamed. Scope, roughly in dependency order:
+
+- `git mv Alan FocusBorder` and `git mv Alan.xcodeproj FocusBorder.xcodeproj`, plus the shared
+  scheme `xcshareddata/xcschemes/Alan.xcscheme`.
+- `project.pbxproj`: the target name, `PRODUCT_NAME`, the `Alan.app` product reference, and the
+  **`PBXFileSystemSynchronizedRootGroup`'s `path = Alan`** — this project uses Xcode 16
+  synchronized groups, so that path is what binds the source directory to the target. Getting it
+  wrong yields a target with no sources rather than an error.
+- The scheme's `BuildableName`, `BlueprintName` and `ReferencedContainer`.
+- `PRODUCT_BUNDLE_IDENTIFIER` → `com.iclassicnu.FocusBorder`, and the matching `os.Logger`
+  subsystem string in `FocusHighlighter.swift` (two places, one of them the `log show` example in
+  the header comment).
+- User-visible strings: "Quit Alan" in `AppDelegate`, and the app name in `MainMenu.xib`.
+- The per-file header comment blocks say `//  Alan`. Update the project line; **keep
+  `Created by Tyler Hall`** — that is attribution, not branding.
+- `README.md` and this file throughout.
+
+Consequences, both accepted: changing the bundle id **resets the Accessibility grant and drops
+the existing preferences** (five settings, trivial to re-enter). And `/Applications/Alan.app`
+must be deleted after installing `FocusBorder.app`, or two builds fight over the border.
+
+The working directory is also being renamed `~/Projects/Alan` → `~/Projects/FocusBorder`, which
+moves this project's Claude memory path with it.
