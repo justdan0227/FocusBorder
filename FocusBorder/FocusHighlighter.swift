@@ -35,6 +35,7 @@ class FocusHighlighter {
     private var lastAXFrame: CGRect?
     private var sampleCount = 0
     private var tickCount = 0
+    private var lastSampleTime: TimeInterval = 0
 
     // Hover dwell. Without it the border flashes through every window the pointer crosses on
     // its way somewhere else; 100ms is long enough to ignore transit, short enough to still
@@ -94,6 +95,7 @@ class FocusHighlighter {
                     self.updateFromPointer(pointerMoved: true)
                 } else {
                     self.beginDragSamplingIfNeeded()
+                    self.sampleFromDragEvent()
                 }
             }
         }
@@ -525,6 +527,20 @@ class FocusHighlighter {
         }
         RunLoop.current.add(timer, forMode: .common)
         dragSampler = timer
+
+        // The timer's first fire is a full interval away; the window is moving *now*.
+        sampleDraggedWindow()
+    }
+
+    // Called for every .leftMouseDragged while the sampler runs. The events mark the moment
+    // the window actually moved, so sampling here shaves up to a full timer interval of
+    // staleness off what the next composite shows; the timer keeps running to cover coalesced
+    // or dropped events. The 3ms guard just stops event + tick from doubling the WindowServer
+    // traffic for no visible gain.
+    private func sampleFromDragEvent() {
+        guard dragSampler != nil else { return }
+        guard ProcessInfo.processInfo.systemUptime - lastSampleTime >= 0.003 else { return }
+        sampleDraggedWindow()
     }
 
     private func endDragSampling() {
@@ -534,7 +550,7 @@ class FocusHighlighter {
         dragSampler = nil
         draggedWindowID = nil
 
-        log.info("drag ended: \(self.sampleCount, privacy: .public) samples from \(self.tickCount, privacy: .public) ticks")
+        log.info("drag ended: \(self.sampleCount, privacy: .public) samples from \(self.tickCount, privacy: .public) attempts (timer + events)")
 
         // Hand back to the AX path, which is authoritative once the drag is over.
         refreshTarget()
@@ -543,25 +559,44 @@ class FocusHighlighter {
     // Matches the tracked AX window to a WindowServer window id by pid and geometry. Only the
     // geometry keys are used, so this needs no Screen Recording permission — window *names*
     // would, but those are never read.
+    //
+    // Nearest-geometry, not exact: by the time the first .leftMouseDragged reaches the global
+    // monitor the window has already moved with the cursor, and lastAXFrame only refreshes at
+    // the ~10Hz AX cadence — an exact ±2px match therefore misses for the first ~100ms of every
+    // real drag (measured: 14 straight misses over 106ms) and leaves the drag start on the 10Hz
+    // path. Requiring overlap with the stale frame and taking the closest candidate attaches on
+    // the first event, and still resolves to the same window an exact match would (its distance
+    // is ~0), so the app's other windows lose the tie.
     private func resolveDraggedWindowID() -> CGWindowID? {
         guard observedPID != 0, let axFrame = lastAXFrame else { return nil }
         guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] else { return nil }
+
+        var bestID: CGWindowID?
+        var bestDistance = CGFloat.greatestFiniteMagnitude
 
         for entry in list {
             guard let pid = entry[kCGWindowOwnerPID as String] as? pid_t, pid == observedPID,
                   let layer = entry[kCGWindowLayer as String] as? Int, layer == 0,
                   let number = entry[kCGWindowNumber as String] as? CGWindowID,
                   let boundsDict = entry[kCGWindowBounds as String] as? NSDictionary,
-                  let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary)
+                  let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
+                  bounds.intersects(axFrame)
             else { continue }
 
-            if abs(bounds.origin.x - axFrame.origin.x) <= 2,
-               abs(bounds.origin.y - axFrame.origin.y) <= 2,
-               abs(bounds.width - axFrame.width) <= 2,
-               abs(bounds.height - axFrame.height) <= 2 {
-                log.info("drag sampling window \(number, privacy: .public) pid \(pid, privacy: .public)")
-                return number
+            let distance = abs(bounds.origin.x - axFrame.origin.x)
+                + abs(bounds.origin.y - axFrame.origin.y)
+                + abs(bounds.width - axFrame.width)
+                + abs(bounds.height - axFrame.height)
+
+            if distance < bestDistance {
+                bestDistance = distance
+                bestID = number
             }
+        }
+
+        if let bestID {
+            log.info("drag sampling window \(bestID, privacy: .public) pid \(self.observedPID, privacy: .public) offset \(Int(bestDistance), privacy: .public)px")
+            return bestID
         }
 
         log.info("drag sampling: no WindowServer match for pid \(self.observedPID, privacy: .public)")
@@ -570,6 +605,7 @@ class FocusHighlighter {
 
     private func sampleDraggedWindow() {
         tickCount += 1
+        lastSampleTime = ProcessInfo.processInfo.systemUptime
 
         // .optionIncludingWindow takes the id directly. CGWindowListCreateDescriptionFromArray
         // looks like the natural fit but silently returns nothing from Swift: it wants the ids
