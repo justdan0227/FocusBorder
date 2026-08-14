@@ -16,6 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }()
 
     private var statusItem: NSStatusItem?
+    private weak var toggleMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
 
@@ -27,15 +28,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             Key.highlightUnderPointer: false,
             Key.hideAfterSeconds: 5,
             Key.lightMode: Defaults.lightModeColor,
-            Key.darkMode: Defaults.darkModeColor
+            Key.darkMode: Defaults.darkModeColor,
+            Key.enabled: true,
+            Key.hotKeyCode: Int(Shortcut.defaultToggle.keyCode),
+            Key.hotKeyModifiers: Int(Shortcut.defaultToggle.modifiers.rawValue)
         ])
 
         applyDockVisibility()
         applyMenuBarVisibility()
 
+        GlobalHotKey.shared.handler = { [weak self] in
+            FocusHighlighter.shared.toggleEnabled()
+            self?.updateToggleMenuItem()
+        }
+        applyHotKey()
+
         requestAccessibilityPermissionIfNeeded()
 
         FocusHighlighter.shared.start()
+    }
+
+    // Re-reads the shortcut preference and re-registers. Called at launch and whenever the
+    // recorder in Preferences changes it.
+    func applyHotKey() {
+        GlobalHotKey.shared.register(Shortcut.load())
+        updateToggleMenuItem()
     }
 
     // Clicking the Dock icon reopens Preferences. FocusBorder has no main window, so without this
@@ -73,6 +90,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         item.button?.image = image
 
         let menu = NSMenu()
+        let toggle = menu.addItem(withTitle: "Enable Border", action: #selector(toggleEnabled(_:)), keyEquivalent: "")
+        toggle.target = self
+        toggleMenuItem = toggle
+        updateToggleMenuItem()
+        menu.addItem(.separator())
         let prefsItem = menu.addItem(withTitle: "Preferences…", action: #selector(showPrefs(_:)), keyEquivalent: ",")
         prefsItem.target = self
         menu.addItem(.separator())
@@ -110,6 +132,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
             NSApp.terminate(nil)
             return
+        }
+    }
+
+    @IBAction func toggleEnabled(_ sender: AnyObject?) {
+        FocusHighlighter.shared.toggleEnabled()
+        updateToggleMenuItem()
+    }
+
+    // The menu item mirrors the current state and advertises the hotkey. The key equivalent is
+    // cosmetic here — Carbon already handles the combination globally — but it is the only place
+    // the shortcut is discoverable without opening Preferences.
+    func updateToggleMenuItem() {
+        guard let toggleMenuItem else { return }
+
+        toggleMenuItem.state = FocusHighlighter.shared.isEnabled ? .on : .off
+
+        // Multi-character names ("Space", "F5") are not valid key equivalents, so those
+        // shortcuts simply go unadvertised rather than rendering as garbage.
+        let name = Shortcut.load().map { Shortcut.keyName(for: $0.keyCode) } ?? ""
+
+        if let shortcut = Shortcut.load(), shortcut.isValid, name.count == 1 {
+            toggleMenuItem.keyEquivalent = name.lowercased()
+            toggleMenuItem.keyEquivalentModifierMask = shortcut.modifiers
+        } else {
+            toggleMenuItem.keyEquivalent = ""
+            toggleMenuItem.keyEquivalentModifierMask = []
         }
     }
 

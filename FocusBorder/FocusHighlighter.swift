@@ -114,7 +114,41 @@ class FocusHighlighter {
         if hoverEnabled { noteHoverPointerMoved() }
     }
 
+    // The master on/off switch, driven by the global hotkey and the menu bar item. Every entry
+    // point that could show the border checks it, so a disabled app is inert rather than
+    // merely hidden — no AX round trips, no drag sampling, no timers.
+    var isEnabled: Bool {
+        UserDefaults.standard.bool(forKey: Key.enabled)
+    }
+
+    func toggleEnabled() {
+        setEnabled(!isEnabled)
+    }
+
+    func setEnabled(_ enabled: Bool) {
+        guard enabled != isEnabled else { return }
+
+        UserDefaults.standard.set(enabled, forKey: Key.enabled)
+        log.info("enabled = \(enabled, privacy: .public)")
+
+        if enabled {
+            // Same bookkeeping reset a mode toggle needs: clean timers, then re-target for
+            // whichever mode is currently on.
+            modeChanged()
+        } else {
+            endDragSampling()
+            cancelDwell()
+            cancelHideTimer()
+            cancelHoverIdleTimer()
+            currentHoverWindowID = nil
+            suppressedWindow = nil
+            hoverSuppressed = false
+            hideHighlight()
+        }
+    }
+
     func forceUpdate() {
+        guard isEnabled else { return }
         guard let lastFrame else { return }
         highlightWindow.updateFrame(to: lastFrame, raise: true)
         highlightWindow.redraw()
@@ -191,6 +225,8 @@ class FocusHighlighter {
     // idle-hidden border and restart the countdown. The 0.5s fallback poll passes false, and must
     // not — otherwise it would resurrect the border twice a second and the hide would never stick.
     private func updateFromPointer(pointerMoved: Bool = false) {
+        guard isEnabled else { return }
+
         if pointerMoved {
             hoverSuppressed = false
             noteHoverPointerMoved()
@@ -230,6 +266,8 @@ class FocusHighlighter {
         dwellTimer = nil
         pendingHoverWindowID = nil
 
+        guard isEnabled else { return }
+
         if let hit = windowUnderPointer() {
             currentHoverWindowID = hit.id
             applyHoverBounds(hit.bounds)
@@ -258,6 +296,8 @@ class FocusHighlighter {
 
     // Works out which window is focused and re-points the observers at it.
     private func refreshTarget() {
+        guard isEnabled else { return }
+
         // In hover mode the pointer decides, so the AX focus path must not fight it — this also
         // catches the fallback timer and any stray AX notification.
         if hoverEnabled {
@@ -462,6 +502,7 @@ class FocusHighlighter {
     }
 
     private func beginDragSamplingIfNeeded() {
+        guard isEnabled else { return }
         guard dragSampler == nil else { return }
         guard let windowID = resolveDraggedWindowID() else { return }
 

@@ -12,6 +12,7 @@
                 <outlet property="hoverCheckbox" destination="hv1-ck-box" id="hv2-ou-tlt"/>
                 <outlet property="lightModeColorWell" destination="a3u-bc-pli" id="gs0-l4-XRK"/>
                 <outlet property="menuBarIconCheckbox" destination="mb1-ck-box" id="mb2-ou-tlt"/>
+                <outlet property="shortcutButton" destination="sc1-bt-rec" id="sc2-ou-tlt"/>
                 <outlet property="window" destination="QvC-M9-y7g" id="tgm-uC-mjt"/>
             </connections>
         </customObject>
@@ -19,14 +20,14 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window identifier="PrefsWindowController" title="FocusBorder" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" frameAutosaveName="PrefsWindowController" animationBehavior="default" id="QvC-M9-y7g">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
-            <rect key="contentRect" x="196" y="240" width="470" height="337"/>
+            <rect key="contentRect" x="196" y="240" width="470" height="377"/>
             <rect key="screenRect" x="0.0" y="0.0" width="2880" height="1595"/>
             <view key="contentView" wantsLayer="YES" id="EiT-Mj-1SZ">
-                <rect key="frame" x="0.0" y="0.0" width="470" height="337"/>
+                <rect key="frame" x="0.0" y="0.0" width="470" height="377"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <gridView xPlacement="leading" yPlacement="bottom" rowAlignment="none" translatesAutoresizingMaskIntoConstraints="NO" id="fhS-ed-gPi">
-                        <rect key="frame" x="105" y="60" width="290" height="216"/>
+                        <rect key="frame" x="105" y="60" width="290" height="256"/>
                         <rows>
                             <gridRow rowAlignment="firstBaseline" id="7Vg-m1-wed"/>
                             <gridRow rowAlignment="firstBaseline" id="3Pg-Pm-pEX"/>
@@ -36,6 +37,7 @@
                             <gridRow rowAlignment="firstBaseline" id="hd0-ro-wid"/>
                             <gridRow rowAlignment="firstBaseline" id="hv0-ro-wid"/>
                             <gridRow rowAlignment="firstBaseline" id="ah0-ro-wid"/>
+                            <gridRow rowAlignment="firstBaseline" id="sc0-ro-wid"/>
                         </rows>
                         <columns>
                             <gridColumn xPlacement="trailing" id="SwQ-Kz-8BL"/>
@@ -230,6 +232,29 @@
                                     </connections>
                                 </stepper>
                             </gridCell>
+                            <gridCell row="sc0-ro-wid" column="SwQ-Kz-8BL" id="sc3-ce-lbl">
+                                <textField key="contentView" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sc4-tx-lbl">
+                                    <rect key="frame" x="12" y="-138" width="107" height="16"/>
+                                    <textFieldCell key="cell" lineBreakMode="clipping" title="Toggle Shortcut" id="sc5-tx-cel">
+                                        <font key="font" usesAppearanceFont="YES"/>
+                                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                    </textFieldCell>
+                                </textField>
+                            </gridCell>
+                            <gridCell row="sc0-ro-wid" column="WUf-1y-4w5" id="sc6-ce-btn">
+                                <button key="contentView" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sc1-bt-rec" customClass="ShortcutRecorderButton" customModule="FocusBorder" customModuleProvider="target">
+                                    <rect key="frame" x="84" y="-144" width="140" height="32"/>
+                                    <buttonCell key="cell" type="push" title="Click to Record" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="sc7-bt-cel">
+                                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                        <font key="font" usesAppearanceFont="YES"/>
+                                    </buttonCell>
+                                    <connections>
+                                        <action selector="shortcutChanged:" target="-2" id="sc8-ac-tio"/>
+                                    </connections>
+                                </button>
+                            </gridCell>
+                            <gridCell row="sc0-ro-wid" column="L2g-Pd-kyh" id="sc9-ce-emp"/>
                         </gridCells>
                     </gridView>
                 </subviews>

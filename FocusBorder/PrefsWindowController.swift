@@ -14,6 +14,7 @@ class PrefsWindowController: NSWindowController {
     @IBOutlet weak var menuBarIconCheckbox: NSButton!
     @IBOutlet weak var hideDockCheckbox: NSButton!
     @IBOutlet weak var hoverCheckbox: NSButton!
+    @IBOutlet weak var shortcutButton: ShortcutRecorderButton!
 
     private var appDelegate: AppDelegate? {
         return NSApp.delegate as? AppDelegate
@@ -29,6 +30,8 @@ class PrefsWindowController: NSWindowController {
         hideDockCheckbox.state = UserDefaults.standard.bool(forKey: Key.hideDock) ? .on : .off
         hoverCheckbox.state = UserDefaults.standard.bool(forKey: Key.highlightUnderPointer) ? .on : .off
 
+        shortcutButton.shortcut = Shortcut.load()
+
         NotificationCenter.default.addObserver(self, selector: #selector(PrefsWindowController.userDefaultsChanged), name: UserDefaults.didChangeNotification, object: nil)
     }
     
@@ -43,6 +46,11 @@ class PrefsWindowController: NSWindowController {
     @IBAction func highlightUnderPointerChanged(_ sender: NSButton) {
         UserDefaults.standard.set(sender.state == .on, forKey: Key.highlightUnderPointer)
         FocusHighlighter.shared.modeChanged()
+    }
+
+    @IBAction func shortcutChanged(_ sender: ShortcutRecorderButton) {
+        Shortcut.save(sender.shortcut)
+        appDelegate?.applyHotKey()
     }
 
     @IBAction func menuBarIconChanged(_ sender: NSButton) {

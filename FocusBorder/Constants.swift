@@ -21,4 +21,7 @@ struct Key {
     static let hideAfterSeconds = "hideAfterSeconds"
     static let lightMode = "lightMode"
     static let darkMode = "darkMode"
+    static let enabled = "enabled"
+    static let hotKeyCode = "hotKeyCode"
+    static let hotKeyModifiers = "hotKeyModifiers"
 }
