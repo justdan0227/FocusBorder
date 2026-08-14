@@ -62,8 +62,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard statusItem == nil else { return }
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        let image = NSImage(systemSymbolName: "macwindow", accessibilityDescription: "Alan")
+
+        // The asset is already marked template in its Contents.json, but setting it here too
+        // keeps the SF Symbol fallback correct — a status item drawn non-template ignores the
+        // menu bar's light/dark appearance and stays black on a dark bar.
+        let image = NSImage(named: "MenuBarIcon")
+            ?? NSImage(systemSymbolName: "macwindow", accessibilityDescription: "Alan")
         image?.isTemplate = true
+        image?.accessibilityDescription = "Alan"
         item.button?.image = image
 
         let menu = NSMenu()

@@ -120,6 +120,30 @@ rounds of guessing into a measurement:
   `NSApp.activate()` first; without it the window opens behind the frontmost app whenever
   Alan is running as `.accessory`.
 
+## Icons
+
+Both icons are cut from one source render (a neon rounded-square window frame, with the menu
+bar glyph shown beside it as black-on-white and white-on-black badges). The extraction is
+scripted, not hand-traced, so it can be redone from a new render:
+
+- **AppIcon** (`Assets.xcassets/AppIcon.appiconset/Icon.png`, single 1024 `512x512@2x` entry)
+  is the left panel with its **baked drop shadow stripped** — the body sits at alpha 0.99 and
+  the shadow tapers from 0.70 down, so remapping alpha through a narrow ramp at 0.80 removes it
+  while leaving a ~2px antialiased edge. Leaving it in would double up with the shadow macOS
+  draws itself.
+- **MenuBarIcon** (`Assets.xcassets/MenuBarIcon.imageset`, 18pt 1x + 2x) is the glyph lifted out
+  of the black-on-white badge: a circular mask keeps the disc edge and surrounding glow out, and
+  luminance becomes the alpha channel. `template-rendering-intent` is `template` in
+  `Contents.json` **and** `isTemplate = true` in code — a status item drawn non-template ignores
+  the menu bar's appearance and stays black on a dark bar. One template covers light and dark,
+  so the second badge in the render is reference only, not a second asset.
+
+The artwork is deliberately **full-bleed** (the rounded rect fills the whole 1024 canvas) rather
+than sitting on Apple's classic 824/1024 icon grid. On macOS 27 an app shipping only a legacy
+`AppIcon` gets its artwork inset onto a system-drawn light plate, so grid margin double-insets
+and the icon renders visibly smaller — this was compared both ways. Escaping the plate entirely
+would mean shipping an Icon Composer `.icon` asset, which this app does not have.
+
 ## Preferences
 
 All settings live in `UserDefaults` under the keys in `Constants.swift`, registered with
