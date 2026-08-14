@@ -170,8 +170,30 @@ hidden until focus moves to a *different* window: `suppressedWindow` is compared
 `CFEqual` in `updateFrame(from:raise:)`, and cleared on target change, focus loss, drag start,
 and `modeChanged()`. Drags cancel the pending timer and any suppression so the border never
 vanishes mid-drag; `endDragSampling -> refreshTarget()` re-shows and re-arms on mouse-up.
-Setting the pref to 0 mid-countdown is honored at fire time (the border stays). Hover mode is
-completely unaffected.
+Setting the pref to 0 mid-countdown is honored at fire time (the border stays).
+
+**Hover mode uses the same pref but a different trigger.** There is no discrete target to key a
+countdown to — the pointer retargets constantly, so a per-window countdown would strobe. Instead
+`hideAfterSeconds` counts *pointer idle*: the border hides once the pointer has been still that
+long (`hoverIdleTimer` → `hoverSuppressed`), and any pointer event clears the suppression and
+restarts the count. Two things make it work:
+
+- `updateFromPointer(pointerMoved:)` — real mouse events pass `true`, the 0.5s fallback poll
+  passes `false`. Without that split the fallback would resurrect the border twice a second and
+  the hide would never stick. A `false` call while suppressed returns immediately.
+- The countdown is a timestamp (`lastPointerMoveTime`) plus **one** self-rescheduling timer, not
+  a timer restarted per event. Mouse-moved arrives at 60–120Hz; restarting a `Timer` on each
+  would churn an object per event. On fire it compares elapsed idle against the pref and
+  reschedules for the remainder if the pointer moved recently.
+
+Re-showing needs no explicit `orderFront`: `hideHighlight()` nils `lastFrame`, so the next
+`applyHoverBounds` always sees a changed frame and `HighlightWindow.updateFrame` calls
+`orderFrontRegardless()` on its `!isVisible` branch.
+
+Note that synthetic `CGEvent` mouse moves **cannot** be used to test any of this from a scratch
+script — macOS silently drops HID events posted by a process that is not itself Accessibility-
+trusted, so the cursor never moves and the test reads as "the border never came back." Verify
+hover behavior by hand, or from the `auto-hide: pointer idle` log lines.
 
 Adding a row to the prefs grid means adding a `gridRow` plus one `gridCell` per column (three),
 even for empty cells, and growing the window's `contentRect` — the window is not resizable, so

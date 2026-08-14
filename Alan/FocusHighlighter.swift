@@ -52,6 +52,14 @@ class FocusHighlighter {
     private var hideTimer: Timer?
     private var suppressedWindow: AXUIElement?
 
+    // Hover auto-hide. Focus mode keys the countdown to the focused window, which hover mode has
+    // no equivalent of — the pointer retargets constantly, so a per-window countdown would strobe.
+    // The trigger here is pointer *idle* instead: the border hides once the pointer has been still
+    // for `hideAfterSeconds`, and any movement re-shows it and restarts the countdown.
+    private var hoverIdleTimer: Timer?
+    private var hoverSuppressed = false
+    private var lastPointerMoveTime: TimeInterval = 0
+
     private var hideAfterSeconds: Int {
         UserDefaults.standard.integer(forKey: Key.hideAfterSeconds)
     }
@@ -70,17 +78,20 @@ class FocusHighlighter {
         mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged, .leftMouseUp]) { [weak self] event in
             guard let self else { return }
 
+            // Every branch below is a real pointer event, which is what distinguishes them from
+            // the fallback timer's call into the same method — only these restart the idle
+            // countdown and wake an idle-hidden border.
             switch event.type {
             case .leftMouseUp:
                 self.endDragSampling()
-                if self.hoverEnabled { self.updateFromPointer() }
+                if self.hoverEnabled { self.updateFromPointer(pointerMoved: true) }
             case .mouseMoved:
-                if self.hoverEnabled { self.updateFromPointer() }
+                if self.hoverEnabled { self.updateFromPointer(pointerMoved: true) }
             default:
                 // In hover mode the pointer already tracks the dragged window, so the
                 // WindowServer sampler is redundant — mouse events arrive just as fast.
                 if self.hoverEnabled {
-                    self.updateFromPointer()
+                    self.updateFromPointer(pointerMoved: true)
                 } else {
                     self.beginDragSamplingIfNeeded()
                 }
@@ -97,6 +108,10 @@ class FocusHighlighter {
         if let fallbackTimer {
             RunLoop.current.add(fallbackTimer, forMode: .common)
         }
+
+        // Launching straight into hover mode counts as the pointer having just "arrived", so the
+        // border gets one countdown without waiting for the user to jiggle the mouse first.
+        if hoverEnabled { noteHoverPointerMoved() }
     }
 
     func forceUpdate() {
@@ -131,14 +146,18 @@ class FocusHighlighter {
         cancelDwell()
         currentHoverWindowID = nil
 
-        // Auto-hide state is focus-mode state; hovering must start clean and end clean.
+        // Each mode owns its own auto-hide bookkeeping, and the two are not interchangeable —
+        // both must start clean and end clean on a toggle.
         cancelHideTimer()
         suppressedWindow = nil
+        cancelHoverIdleTimer()
+        hoverSuppressed = false
 
         if hoverEnabled {
             // Explicit toggle, so commit straight away instead of making the user wiggle the
             // mouse and wait out a dwell.
             commitHoverTarget()
+            noteHoverPointerMoved()
         } else {
             refreshTarget()
         }
@@ -168,7 +187,17 @@ class FocusHighlighter {
         return nil
     }
 
-    private func updateFromPointer() {
+    // `pointerMoved` separates the two kinds of caller. Real mouse events pass true: they wake an
+    // idle-hidden border and restart the countdown. The 0.5s fallback poll passes false, and must
+    // not — otherwise it would resurrect the border twice a second and the hide would never stick.
+    private func updateFromPointer(pointerMoved: Bool = false) {
+        if pointerMoved {
+            hoverSuppressed = false
+            noteHoverPointerMoved()
+        } else if hoverSuppressed {
+            return
+        }
+
         let hit = windowUnderPointer()
 
         // Still the window already highlighted: track it live and cancel any pending switch.
@@ -386,6 +415,50 @@ class FocusHighlighter {
         suppressedWindow = observedWindow
         hideHighlight()
         log.info("auto-hide: fired after \(seconds, privacy: .public)s; hidden until focus changes")
+    }
+
+    // Stamping a timestamp rather than rescheduling is deliberate: mouse-moved events arrive at
+    // 60-120Hz, so restarting a Timer on each one would churn an object per event. Instead the
+    // timer is armed once and reschedules itself for whatever idle time is left when it fires.
+    private func noteHoverPointerMoved() {
+        lastPointerMoveTime = ProcessInfo.processInfo.systemUptime
+
+        guard hoverIdleTimer == nil else { return }
+        scheduleHoverIdleTimer(after: TimeInterval(hideAfterSeconds))
+    }
+
+    private func scheduleHoverIdleTimer(after delay: TimeInterval) {
+        guard delay > 0 else { return }
+
+        let timer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+            self?.hoverIdleTimerFired()
+        }
+        RunLoop.current.add(timer, forMode: .common)
+        hoverIdleTimer = timer
+    }
+
+    private func cancelHoverIdleTimer() {
+        hoverIdleTimer?.invalidate()
+        hoverIdleTimer = nil
+    }
+
+    private func hoverIdleTimerFired() {
+        hoverIdleTimer = nil
+
+        // The mode was switched, or the pref set to 0 (never), while the countdown ran.
+        guard hoverEnabled else { return }
+        let seconds = TimeInterval(hideAfterSeconds)
+        guard seconds > 0 else { return }
+
+        let idle = ProcessInfo.processInfo.systemUptime - lastPointerMoveTime
+        if idle < seconds {
+            scheduleHoverIdleTimer(after: seconds - idle)
+            return
+        }
+
+        hoverSuppressed = true
+        hideHighlight()
+        log.info("auto-hide: pointer idle \(seconds, privacy: .public)s; hidden until it moves")
     }
 
     private func beginDragSamplingIfNeeded() {
