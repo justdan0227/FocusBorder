@@ -44,6 +44,18 @@ class FocusHighlighter {
     private var currentHoverWindowID: CGWindowID?
     private var pendingHoverWindowID: CGWindowID?
 
+    // Auto-hide. When focus lands on a window the border shows for `hideAfterSeconds`
+    // (default 5; 0 = never). The one-shot timer is armed once per target — frame-only
+    // reapplies (AX move/resize, the 0.5s fallback, drag samples) never re-arm it. On fire
+    // the border hides until focus moves to a *different* window; `suppressedWindow` records
+    // which window is hidden so same-window reapplies cannot re-show it.
+    private var hideTimer: Timer?
+    private var suppressedWindow: AXUIElement?
+
+    private var hideAfterSeconds: Int {
+        UserDefaults.standard.integer(forKey: Key.hideAfterSeconds)
+    }
+
     func start() {
         refreshTarget()
 
@@ -118,6 +130,10 @@ class FocusHighlighter {
     func modeChanged() {
         cancelDwell()
         currentHoverWindowID = nil
+
+        // Auto-hide state is focus-mode state; hovering must start clean and end clean.
+        cancelHideTimer()
+        suppressedWindow = nil
 
         if hoverEnabled {
             // Explicit toggle, so commit straight away instead of making the user wiggle the
@@ -223,6 +239,8 @@ class FocusHighlighter {
         guard let window = currentFocusedWindow() else {
             teardownObserver()
             hideHighlight()
+            cancelHideTimer()
+            suppressedWindow = nil
             return
         }
 
@@ -241,6 +259,12 @@ class FocusHighlighter {
             }
 
             observedWindow = window
+
+            // New target: a stale pending timer must not fire for the old window, and any
+            // suppression from the previous target no longer applies. updateFrame below
+            // re-shows and arms the countdown.
+            cancelHideTimer()
+            suppressedWindow = nil
 
             if let observer {
                 let refcon = Unmanaged.passUnretained(self).toOpaque()
@@ -300,6 +324,14 @@ class FocusHighlighter {
     }
 
     private func updateFrame(from window: AXUIElement, raise: Bool = false) {
+        // Auto-hide suppression: this window's border is hidden until focus moves on. One
+        // guard covers both callers — the AX move/resize hot path and refreshTarget's
+        // raise:true re-show — so the fallback timer, stale notifications and forceUpdate
+        // cannot resurrect a timer-hidden border.
+        if let suppressedWindow, CFEqual(suppressedWindow, window) {
+            return
+        }
+
         guard let axFrame = frame(of: window) else {
             hideHighlight()
             return
@@ -313,11 +345,60 @@ class FocusHighlighter {
             lastFrame = cocoaFrame
             highlightWindow.updateFrame(to: cocoaFrame, raise: raise)
         }
+
+        armHideTimerIfNeeded(for: window)
+    }
+
+    // Arms only when nothing is already pending, so a frame reapply on a visible border never
+    // restarts the countdown. New targets, drag end, and mode toggles all arrive here with
+    // hideTimer == nil (they cancel first), so each gets a fresh countdown.
+    private func armHideTimerIfNeeded(for window: AXUIElement) {
+        guard hideTimer == nil, highlightWindow.isVisible else { return }
+
+        let seconds = hideAfterSeconds
+        guard seconds > 0 else { return }
+
+        let timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(seconds), repeats: false) { [weak self] _ in
+            self?.hideTimerFired(for: window, after: seconds)
+        }
+        RunLoop.current.add(timer, forMode: .common)
+        hideTimer = timer
+
+        log.info("auto-hide: armed \(seconds, privacy: .public)s timer")
+    }
+
+    private func cancelHideTimer() {
+        hideTimer?.invalidate()
+        hideTimer = nil
+    }
+
+    private func hideTimerFired(for window: AXUIElement, after seconds: Int) {
+        hideTimer = nil
+
+        // The pref changed to 0 (never) while the countdown ran — don't hide after all.
+        guard hideAfterSeconds > 0 else { return }
+
+        // The target changed while the timer was running; the new target's own countdown
+        // supersedes this one. (The new-target branch already cancels the pending timer, so
+        // this is belt-and-braces.)
+        guard let observedWindow, CFEqual(observedWindow, window) else { return }
+
+        suppressedWindow = observedWindow
+        hideHighlight()
+        log.info("auto-hide: fired after \(seconds, privacy: .public)s; hidden until focus changes")
     }
 
     private func beginDragSamplingIfNeeded() {
         guard dragSampler == nil else { return }
         guard let windowID = resolveDraggedWindowID() else { return }
+
+        // The border must stay up for the whole drag: kill any pending countdown and drop
+        // any suppression. endDragSampling -> refreshTarget() re-shows and re-arms on
+        // mouse-up. If the border is already timer-hidden this never runs —
+        // resolveDraggedWindowID needs lastAXFrame, which hideHighlight niled — so a
+        // same-window drag cannot resurrect it, which is the decided behavior.
+        cancelHideTimer()
+        suppressedWindow = nil
 
         draggedWindowID = windowID
         sampleCount = 0

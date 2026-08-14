@@ -18,6 +18,7 @@ struct Key {
     static let hideDock = "hideDock"
     static let showMenuBarIcon = "showMenuBarIcon"
     static let highlightUnderPointer = "highlightUnderPointer"
+    static let hideAfterSeconds = "hideAfterSeconds"
     static let lightMode = "lightMode"
     static let darkMode = "darkMode"
 }

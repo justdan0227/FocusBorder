@@ -25,6 +25,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             Key.hideDock: false,
             Key.showMenuBarIcon: true,
             Key.highlightUnderPointer: false,
+            Key.hideAfterSeconds: 5,
             Key.lightMode: Defaults.lightModeColor,
             Key.darkMode: Defaults.darkModeColor
         ])
