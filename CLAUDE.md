@@ -257,9 +257,28 @@ Some commits are **fork-local and must never be sent upstream**:
   inside the menu bar commit `967f654` rather than standing alone.
 - The `os.Logger` diagnostics — the subsystem is hardcoded to `com.iclassicnu.Alan`. Strip them
   or derive from `Bundle.main.bundleIdentifier` before any upstream branch.
+- `44725ec` (icons) — replaces the maintainer's artwork with this fork's own. Taste, and
+  replacing a maintainer's icon uninvited lands badly regardless of quality. The artwork is also
+  AI-generated, so it is not Tyler's to receive and not covered by his license either way.
+- `README.md` and `LICENSE` — the README is rewritten as fork documentation, and the LICENSE
+  carries a second copyright line. Both are correct here and wrong upstream.
 
 A PR-able branch is therefore `d19c7f6` + `58fdcae` (the drag lag fix) cherry-picked onto
 `ebdaad7` with the logging removed — roughly +180 lines in two files. The measured ~10Hz AX
 finding in `58fdcae`'s commit message is the substance of that contribution. Note the upstream
 README describes the project as "more software satire than useful utility", so open an issue
-and ask before investing in a PR.
+and ask before investing in a PR. Hover mode and auto-hide are *features*, not fixes — they need
+the maintainer's buy-in before any code, and do not belong in the same PR as the drag fix.
+
+### Publishing this fork
+
+Upstream is MIT. Republishing publicly is permitted outright and needs no permission; the only
+binding obligation is the notice clause, so **`LICENSE` must keep Tyler Hall's copyright line**
+— Dan's line was added beneath it, not in place of it. The per-file `Created by Tyler Hall`
+headers stay for the same reason. If a built `.app` is ever distributed rather than just source,
+the license text has to travel with it (a `Credits.rtf` or a bundled `LICENSE` in `Resources`),
+because a binary is a "copy of the Software" too.
+
+The bundle id divergence is load-bearing here rather than incidental: `com.iclassicnu.Alan` lets
+this build and upstream's coexist without either taking over the other's Accessibility grant or
+preferences domain. Do not "fix" it back to `studio.retina.Alan`.
