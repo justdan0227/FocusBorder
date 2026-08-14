@@ -9,13 +9,13 @@
 /* Begin PBXFileReference section */
 		C618480000000000000000C1 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
 		C618480000000000000000C2 /* Local.xcconfig.example */ = {isa = PBXFileReference; lastKnownFileType = text; path = Local.xcconfig.example; sourceTree = "<group>"; };
-		C61847E72ED753EE0093A1C9 /* Alan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Alan.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C61847E72ED753EE0093A1C9 /* FocusBorder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FocusBorder.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		C61847E92ED753EE0093A1C9 /* Alan */ = {
+		C61847E92ED753EE0093A1C9 /* FocusBorder */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Alan;
+			path = FocusBorder;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -43,7 +43,7 @@
 		C61847DE2ED753EE0093A1C9 = {
 			isa = PBXGroup;
 			children = (
-				C61847E92ED753EE0093A1C9 /* Alan */,
+				C61847E92ED753EE0093A1C9 /* FocusBorder */,
 				C618480000000000000000C3 /* Config */,
 				C61847E82ED753EE0093A1C9 /* Products */,
 			);
@@ -52,7 +52,7 @@
 		C61847E82ED753EE0093A1C9 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C61847E72ED753EE0093A1C9 /* Alan.app */,
+				C61847E72ED753EE0093A1C9 /* FocusBorder.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -60,9 +60,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C61847E62ED753EE0093A1C9 /* Alan */ = {
+		C61847E62ED753EE0093A1C9 /* FocusBorder */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C61847F32ED753EF0093A1C9 /* Build configuration list for PBXNativeTarget "Alan" */;
+			buildConfigurationList = C61847F32ED753EF0093A1C9 /* Build configuration list for PBXNativeTarget "FocusBorder" */;
 			buildPhases = (
 				C61847E32ED753EE0093A1C9 /* Sources */,
 				C61847E42ED753EE0093A1C9 /* Frameworks */,
@@ -73,13 +73,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				C61847E92ED753EE0093A1C9 /* Alan */,
+				C61847E92ED753EE0093A1C9 /* FocusBorder */,
 			);
-			name = Alan;
+			name = FocusBorder;
 			packageProductDependencies = (
 			);
 			productName = Focused;
-			productReference = C61847E72ED753EE0093A1C9 /* Alan.app */;
+			productReference = C61847E72ED753EE0093A1C9 /* FocusBorder.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -97,7 +97,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C61847E22ED753EE0093A1C9 /* Build configuration list for PBXProject "Alan" */;
+			buildConfigurationList = C61847E22ED753EE0093A1C9 /* Build configuration list for PBXProject "FocusBorder" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -111,7 +111,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C61847E62ED753EE0093A1C9 /* Alan */,
+				C61847E62ED753EE0093A1C9 /* FocusBorder */,
 			);
 		};
 /* End PBXProject section */
@@ -278,7 +278,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.iclassicnu.Alan;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iclassicnu.FocusBorder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -311,7 +311,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.iclassicnu.Alan;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iclassicnu.FocusBorder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -326,7 +326,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C61847E22ED753EE0093A1C9 /* Build configuration list for PBXProject "Alan" */ = {
+		C61847E22ED753EE0093A1C9 /* Build configuration list for PBXProject "FocusBorder" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C61847F12ED753EF0093A1C9 /* Debug */,
@@ -335,7 +335,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C61847F32ED753EF0093A1C9 /* Build configuration list for PBXNativeTarget "Alan" */ = {
+		C61847F32ED753EF0093A1C9 /* Build configuration list for PBXNativeTarget "FocusBorder" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C61847F42ED753EF0093A1C9 /* Debug */,

@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C61847E62ED753EE0093A1C9"
-               BuildableName = "Alan.app"
-               BlueprintName = "Alan"
-               ReferencedContainer = "container:Alan.xcodeproj">
+               BuildableName = "FocusBorder.app"
+               BlueprintName = "FocusBorder"
+               ReferencedContainer = "container:FocusBorder.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C61847E62ED753EE0093A1C9"
-            BuildableName = "Alan.app"
-            BlueprintName = "Alan"
-            ReferencedContainer = "container:Alan.xcodeproj">
+            BuildableName = "FocusBorder.app"
+            BlueprintName = "FocusBorder"
+            ReferencedContainer = "container:FocusBorder.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C61847E62ED753EE0093A1C9"
-            BuildableName = "Alan.app"
-            BlueprintName = "Alan"
-            ReferencedContainer = "container:Alan.xcodeproj">
+            BuildableName = "FocusBorder.app"
+            BlueprintName = "FocusBorder"
+            ReferencedContainer = "container:FocusBorder.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

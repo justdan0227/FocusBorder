@@ -1,6 +1,6 @@
 //
 //  AppDelegate.swift
-//  Alan
+//  FocusBorder
 //
 //  Created by Tyler Hall on 11/26/25.
 //
@@ -38,7 +38,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         FocusHighlighter.shared.start()
     }
 
-    // Clicking the Dock icon reopens Preferences. Alan has no main window, so without this
+    // Clicking the Dock icon reopens Preferences. FocusBorder has no main window, so without this
     // a Dock click does nothing at all.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showPrefs(nil)
@@ -67,16 +67,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // keeps the SF Symbol fallback correct — a status item drawn non-template ignores the
         // menu bar's light/dark appearance and stays black on a dark bar.
         let image = NSImage(named: "MenuBarIcon")
-            ?? NSImage(systemSymbolName: "macwindow", accessibilityDescription: "Alan")
+            ?? NSImage(systemSymbolName: "macwindow", accessibilityDescription: "FocusBorder")
         image?.isTemplate = true
-        image?.accessibilityDescription = "Alan"
+        image?.accessibilityDescription = "FocusBorder"
         item.button?.image = image
 
         let menu = NSMenu()
         let prefsItem = menu.addItem(withTitle: "Preferences…", action: #selector(showPrefs(_:)), keyEquivalent: ",")
         prefsItem.target = self
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit Alan", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(withTitle: "Quit FocusBorder", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         item.menu = menu
 
         statusItem = item
@@ -98,12 +98,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let alert = NSAlert()
             alert.messageText = "Accessibility Permission Required"
             alert.informativeText = """
-            Alan needs Accessibility permission to highlight the focused window.
+            FocusBorder needs Accessibility permission to highlight the focused window.
 
             Please open System Settings → Privacy & Security → Accessibility
-            and enable “Alan”.
+            and enable “FocusBorder”.
 
-            Then relaunch Alan.
+            Then relaunch FocusBorder.
             """
             alert.addButton(withTitle: "Quit")
             alert.runModal()

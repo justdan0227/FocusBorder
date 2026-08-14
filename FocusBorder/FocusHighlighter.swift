@@ -1,6 +1,6 @@
 //
 //  FocusHighlighter.swift
-//  Alan
+//  FocusBorder
 //
 //  Created by Tyler Hall on 11/26/25.
 //
@@ -10,8 +10,8 @@ import ApplicationServices
 import os
 
 // Diagnostics for the drag path. Read with:
-//   log show --last 2m --info --predicate 'subsystem == "com.iclassicnu.Alan"'
-private let log = Logger(subsystem: "com.iclassicnu.Alan", category: "focus")
+//   log show --last 2m --info --predicate 'subsystem == "com.iclassicnu.FocusBorder"'
+private let log = Logger(subsystem: "com.iclassicnu.FocusBorder", category: "focus")
 
 class FocusHighlighter {
 
@@ -165,7 +165,7 @@ class FocusHighlighter {
 
     // Topmost on-screen window containing the pointer. CGWindowListCopyWindowInfo returns
     // front-to-back, so the first hit is what is visually under the cursor — which is the whole
-    // point when windows are stacked. layer == 0 skips the menu bar, Dock, desktop and Alan's
+    // point when windows are stacked. layer == 0 skips the menu bar, Dock, desktop and FocusBorder's
     // own border; the alpha test skips invisible full-screen overlays that would swallow hits.
     // Measured at 0.22ms per call, so running it per mouse-move event is not a concern.
     private func windowUnderPointer() -> (id: CGWindowID, bounds: CGRect)? {

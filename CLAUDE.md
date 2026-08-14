@@ -4,25 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Alan is a small AppKit utility that draws a colored border around whatever window currently
+FocusBorder is a small AppKit utility that draws a colored border around whatever window currently
 has keyboard focus on macOS. Single Xcode app target, no dependencies, no test target, no
-package manager. Deployment target macOS 15.7, Swift 5, bundle id `studio.retina.Alan`.
+package manager. Deployment target macOS 15.7, Swift 5, bundle id `com.iclassicnu.FocusBorder`.
 The upstream README describes it as "more software satire than useful utility" — treat it
 as a small toy app, not a production codebase.
 
 ## Build & run
 
 ```bash
-xcodebuild -project Alan.xcodeproj -scheme Alan -configuration Debug -destination 'platform=macOS' build
-cp -R ~/Library/Developer/Xcode/DerivedData/Alan-*/Build/Products/Debug/Alan.app /Applications/
-open -a /Applications/Alan.app
+xcodebuild -project FocusBorder.xcodeproj -scheme FocusBorder -configuration Debug -destination 'platform=macOS' build
+cp -R ~/Library/Developer/Xcode/DerivedData/FocusBorder-*/Build/Products/Debug/FocusBorder.app /Applications/
+open -a /Applications/FocusBorder.app
 ```
 
 There are no tests and no lint config; `xcodebuild test` will fail (no test target).
-Normal workflow is opening `Alan.xcodeproj` in Xcode and hitting Run.
+Normal workflow is opening `FocusBorder.xcodeproj` in Xcode and hitting Run.
 
 Signing was re-pointed from the upstream author's team to this fork's, and the bundle id is
-`com.iclassicnu.Alan`. The bundle id had to change — automatic signing cannot register
+`com.iclassicnu.FocusBorder`. The bundle id had to change — automatic signing cannot register
 upstream's `studio.retina.Alan` under a different team. If you pull upstream changes to
 `project.pbxproj`, expect to re-apply it.
 
@@ -39,7 +39,7 @@ the target, so if the team ever reappears in `project.pbxproj` it will silently 
 `Local.xcconfig` — check there first if signing goes wrong. Changing the team in Xcode's
 Signing & Capabilities UI is exactly what puts it back.
 
-The app is installed to `/Applications/Alan.app` so the Accessibility grant survives
+The app is installed to `/Applications/FocusBorder.app` so the Accessibility grant survives
 DerivedData cleans. Running straight out of DerivedData works but the grant is tied to the
 path, so it has to be re-approved whenever that path changes.
 
@@ -53,7 +53,7 @@ On macOS 27 the grant is keyed to the binary's signature: even with a stale
 `kTCCServiceAccessibility` row still in the system TCC.db (auth_value=2), a rebuilt binary was
 denied at launch (`TCCAccessRequest` → auth_value 0) and quit via the permission alert — remove
 and re-add the app rather than trusting an existing entry. `tccutil reset Accessibility
-com.iclassicnu.Alan` may also clear the stale entry first. The alert's deep link opens the
+com.iclassicnu.FocusBorder` may also clear the stale entry first. The alert's deep link opens the
 universalaccess pane (VoiceOver etc.), not the Privacy & Security → Accessibility permission
 list, so navigate there manually.
 
@@ -104,13 +104,13 @@ Two traps, both of which cost a debugging round:
 - Only geometry keys are read from the window list. Reading `kCGWindowName` would drag in a
   Screen Recording permission prompt for no benefit.
 
-The `os.Logger` calls under subsystem `com.iclassicnu.Alan` are deliberately kept for this —
+The `os.Logger` calls under subsystem `com.iclassicnu.FocusBorder` are deliberately kept for this —
 drag start, sample/tick counts, and observer registration results. They are what turned two
 rounds of guessing into a measurement:
 
 ```bash
 # note: /usr/bin/log — zsh has its own `log` builtin that shadows it
-/usr/bin/log show --last 5m --info --predicate 'subsystem == "com.iclassicnu.Alan"' --style compact
+/usr/bin/log show --last 5m --info --predicate 'subsystem == "com.iclassicnu.FocusBorder"' --style compact
 ```
 - Coordinate flip — AX rects are top-left-origin across the whole display arrangement; Cocoa
   is bottom-left. `cocoaRect(fromAXRect:)` flips Y using `max` of all `NSScreen.frame.maxY`,
@@ -127,10 +127,10 @@ rounds of guessing into a measurement:
   `UserDefaults.didChangeNotification` to call `FocusHighlighter.forceUpdate()`, which
   re-applies the last known frame so the border redraws immediately.
 - `AppDelegate` also owns the menu bar `NSStatusItem` and the activation policy.
-  `applicationShouldHandleReopen` maps a Dock click to `showPrefs:` — necessary because Alan
+  `applicationShouldHandleReopen` maps a Dock click to `showPrefs:` — necessary because FocusBorder
   has no main window, so a Dock click would otherwise do nothing. `showPrefs:` calls
   `NSApp.activate()` first; without it the window opens behind the frontmost app whenever
-  Alan is running as `.accessory`.
+  FocusBorder is running as `.accessory`.
 
 ## Icons
 
@@ -159,7 +159,7 @@ would mean shipping an Icon Composer `.icon` asset, which this app does not have
 ## Preferences
 
 All settings live in `UserDefaults` under the keys in `Constants.swift`, registered with
-defaults in `applicationDidFinishLaunching`. The Preferences window (Alan menu → Preferences…,
+defaults in `applicationDidFinishLaunching`. The Preferences window (FocusBorder menu → Preferences…,
 ⌘,) exposes all five visual settings: `width`, `inset`, and `hideAfterSeconds` as text field +
 stepper, and `lightMode`/`darkMode` as color wells.
 
@@ -184,7 +184,7 @@ from following keyboard focus to following the pointer — the point being to fi
 buried under others. `windowUnderPointer()` takes the first `layer == 0`, non-transparent
 window containing the cursor from the front-to-back `CGWindowListCopyWindowInfo` ordering.
 Measured at 0.22ms per call, so running it per mouse-move event is not a concern; the `layer`
-and alpha filters are what keep the menu bar, Dock, desktop, Alan's own border, and invisible
+and alpha filters are what keep the menu bar, Dock, desktop, FocusBorder's own border, and invisible
 full-screen overlays from swallowing every hit.
 
 While hover mode is on, `refreshTarget()` returns early into `updateFromPointer()` so the AX
@@ -262,13 +262,13 @@ push. Upstream was last seen at `ebdaad7`.
 
 Some commits are **fork-local and must never be sent upstream**:
 
-- `f17569c` (signing) — repoints `DEVELOPMENT_TEAM` and renames the bundle to
-  `com.iclassicnu.Alan`. Upstream this would sign the maintainer's app with the wrong team and
+- `f17569c` (signing) and the later rename — repoint `DEVELOPMENT_TEAM` and rename the bundle to
+  `com.iclassicnu.FocusBorder`. Upstream this would sign the maintainer's app with the wrong team and
   orphan every existing user's Accessibility grant and preferences domain.
 - `CLAUDE.md` — this file.
 - The `Key.width` default of 1 (upstream ships 5). Taste, not a fix, and currently tangled
   inside the menu bar commit `967f654` rather than standing alone.
-- The `os.Logger` diagnostics — the subsystem is hardcoded to `com.iclassicnu.Alan`. Strip them
+- The `os.Logger` diagnostics — the subsystem is hardcoded to `com.iclassicnu.FocusBorder`. Strip them
   or derive from `Bundle.main.bundleIdentifier` before any upstream branch.
 - `44725ec` (icons) — replaces the maintainer's artwork with this fork's own. Taste, and
   replacing a maintainer's icon uninvited lands badly regardless of quality. The artwork is also
@@ -292,7 +292,7 @@ headers stay for the same reason. If a built `.app` is ever distributed rather t
 the license text has to travel with it (a `Credits.rtf` or a bundled `LICENSE` in `Resources`),
 because a binary is a "copy of the Software" too.
 
-The bundle id divergence is load-bearing here rather than incidental: `com.iclassicnu.Alan` lets
+The bundle id divergence is load-bearing here rather than incidental: `com.iclassicnu.FocusBorder` lets
 this build and upstream's coexist without either taking over the other's Accessibility grant or
 preferences domain. Do not "fix" it back to `studio.retina.Alan`.
 
@@ -304,34 +304,26 @@ The team id remains in history in `project.pbxproj` before `c85e935`, and that h
 public. Team ids ship inside every signed app, so this was judged low-sensitivity and left alone
 rather than force-pushing a rewrite.
 
-## Pending: rename the app to FocusBorder
+## The rename to FocusBorder
 
-Only the *repository* is currently named FocusBorder. The app, target, `Alan.xcodeproj` and the
-`Alan/` source directory still carry the original name — the initial decision was to leave them,
-so that Tyler's name stayed on what he built, and the README says exactly that. **That decision
-was reversed; the next session should rename everything.** Undo the README paragraph that
-promises the app stays called Alan.
+Done. The app, target, project, source directory, bundle id and scheme are all FocusBorder
+now; only genuine references to upstream (`tylerhall/Alan`, `studio.retina.Alan`) still say
+Alan, and the per-file `Created by Tyler Hall` headers stay — that is attribution, not
+branding. The README paragraph that promised the app would keep Tyler's name is gone.
 
-Not yet started, so nothing is half-renamed. Scope, roughly in dependency order:
+Two things about the mechanics are worth keeping:
 
-- `git mv Alan FocusBorder` and `git mv Alan.xcodeproj FocusBorder.xcodeproj`, plus the shared
-  scheme `xcshareddata/xcschemes/Alan.xcscheme`.
-- `project.pbxproj`: the target name, `PRODUCT_NAME`, the `Alan.app` product reference, and the
-  **`PBXFileSystemSynchronizedRootGroup`'s `path = Alan`** — this project uses Xcode 16
-  synchronized groups, so that path is what binds the source directory to the target. Getting it
-  wrong yields a target with no sources rather than an error.
-- The scheme's `BuildableName`, `BlueprintName` and `ReferencedContainer`.
-- `PRODUCT_BUNDLE_IDENTIFIER` → `com.iclassicnu.FocusBorder`, and the matching `os.Logger`
-  subsystem string in `FocusHighlighter.swift` (two places, one of them the `log show` example in
-  the header comment).
-- User-visible strings: "Quit Alan" in `AppDelegate`, and the app name in `MainMenu.xib`.
-- The per-file header comment blocks say `//  Alan`. Update the project line; **keep
-  `Created by Tyler Hall`** — that is attribution, not branding.
-- `README.md` and this file throughout.
+- **The xibs carry the module name.** `MainMenu.xib` and `PrefsWindowController.xib` both had
+  `customModule="Alan"` on their `customObject` entries. The Swift module name follows
+  `PRODUCT_NAME`, so renaming the target without those makes the nib fail to find `AppDelegate`
+  and `PrefsWindowController` at runtime — a silent do-nothing app, not a build error.
+- **`PBXFileSystemSynchronizedRootGroup`'s `path`** is what binds the source directory to the
+  target under Xcode 16 synchronized groups. It is now `FocusBorder`; getting it wrong yields a
+  target with no sources rather than an error.
 
-Consequences, both accepted: changing the bundle id **resets the Accessibility grant and drops
-the existing preferences** (five settings, trivial to re-enter). And `/Applications/Alan.app`
-must be deleted after installing `FocusBorder.app`, or two builds fight over the border.
+`FocusBorder.xcodeproj/xcuserdata/thall.xcuserdatad` (upstream author's stale, gitignored
+scheme-ordering state) was deleted rather than renamed.
 
-The working directory is also being renamed `~/Projects/Alan` → `~/Projects/FocusBorder`, which
-moves this project's Claude memory path with it.
+Consequences, both accepted: the new bundle id **resets the Accessibility grant and drops the
+existing preferences** (five settings, trivial to re-enter). And `/Applications/Alan.app` must
+be deleted after installing `FocusBorder.app`, or two builds fight over the border.

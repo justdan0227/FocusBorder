@@ -1,5 +1,5 @@
 // Shared.xcconfig
-// Alan
+// FocusBorder
 //
 // Build settings that are safe to publish. Signing identity deliberately is not:
 // DEVELOPMENT_TEAM is per-developer, and a committed value signs every clone with

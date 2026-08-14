@@ -7,8 +7,9 @@ FocusBorder is a fork of [Alan](https://github.com/tylerhall/Alan) by
 idea. His note on the upstream repo still applies: *"this app is more software satire than useful
 utility :)"* — this fork just took the satire a little too seriously.
 
-The app itself is still called Alan, and the Xcode project is still `Alan.xcodeproj`. Only the
-repository is renamed, so Tyler's name stays on the thing he actually made.
+The app, the Xcode project and the bundle id are all named FocusBorder here, to keep this fork
+clearly distinct from Tyler's app. His authorship is preserved in the per-file headers and in
+the license.
 
 Upstream is MIT licensed and remains so here; see [LICENSE](LICENSE).
 
@@ -45,10 +46,10 @@ Accessibility); the app will prompt and quit if it isn't granted.
 
 ## Building
 
-No dependencies, no package manager. Open `Alan.xcodeproj` in Xcode and Run, or:
+No dependencies, no package manager. Open `FocusBorder.xcodeproj` in Xcode and Run, or:
 
 ```bash
-xcodebuild -project Alan.xcodeproj -scheme Alan -configuration Debug -destination 'platform=macOS' build
+xcodebuild -project FocusBorder.xcodeproj -scheme FocusBorder -configuration Debug -destination 'platform=macOS' build
 ```
 
 There is no test target.
@@ -66,6 +67,6 @@ cp Config/Local.xcconfig.example Config/Local.xcconfig
 `Config/Local.xcconfig` is gitignored. No development team is committed to this repo, on purpose
 — a committed `DEVELOPMENT_TEAM` signs every clone with somebody else's identity.
 
-Note that this fork uses the bundle id `com.iclassicnu.Alan` rather than upstream's
+Note that this fork uses the bundle id `com.iclassicnu.FocusBorder` rather than upstream's
 `studio.retina.Alan`, deliberately — it means this build and upstream's can coexist without
 either one taking over the other's Accessibility grant or preferences.

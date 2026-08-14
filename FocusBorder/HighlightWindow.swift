@@ -1,6 +1,6 @@
 //
 //  HighlightWindow.swift
-//  Alan
+//  FocusBorder
 //
 //  Created by Tyler Hall on 11/26/25.
 //

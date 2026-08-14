@@ -7,8 +7,8 @@ Config/Local.xcconfig
 
 # Xcode per-user state: window layout, breakpoints, find scopes. Machine-specific, and
 # UserInterfaceState.xcuserstate is a binary blob that conflicts on every pull.
-# Note this does NOT match xcshareddata/ — the shared Alan scheme stays tracked, since
-# `xcodebuild -scheme Alan` needs it.
+# Note this does NOT match xcshareddata/ — the shared FocusBorder scheme stays tracked, since
+# `xcodebuild -scheme FocusBorder` needs it.
 xcuserdata/
 *.xcuserstate
 *.xcscmblueprint

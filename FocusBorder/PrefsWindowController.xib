@@ -5,7 +5,7 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="PrefsWindowController" customModule="Alan" customModuleProvider="target">
+        <customObject id="-2" userLabel="File's Owner" customClass="PrefsWindowController" customModule="FocusBorder" customModuleProvider="target">
             <connections>
                 <outlet property="darkModeColorWell" destination="Jxj-8q-f3z" id="rlQ-f2-vdS"/>
                 <outlet property="hideDockCheckbox" destination="hd1-ck-box" id="hd2-ou-tlt"/>
@@ -17,7 +17,7 @@
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <window identifier="PrefsWindowController" title="Alan" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" frameAutosaveName="PrefsWindowController" animationBehavior="default" id="QvC-M9-y7g">
+        <window identifier="PrefsWindowController" title="FocusBorder" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" frameAutosaveName="PrefsWindowController" animationBehavior="default" id="QvC-M9-y7g">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <rect key="contentRect" x="196" y="240" width="470" height="337"/>
             <rect key="screenRect" x="0.0" y="0.0" width="2880" height="1595"/>
