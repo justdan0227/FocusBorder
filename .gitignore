@@ -1,2 +1,31 @@
+# macOS
 .DS_Store
+
+# Signing identity. Config/Shared.xcconfig pulls this in with an optional #include, so a
+# clone without it still configures and builds — see Config/Local.xcconfig.example.
 Config/Local.xcconfig
+
+# Xcode per-user state: window layout, breakpoints, find scopes. Machine-specific, and
+# UserInterfaceState.xcuserstate is a binary blob that conflicts on every pull.
+# Note this does NOT match xcshareddata/ — the shared Alan scheme stays tracked, since
+# `xcodebuild -scheme Alan` needs it.
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+
+# Build output
+build/
+DerivedData/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Local tooling and notes
+.claude/
+last_session.md
