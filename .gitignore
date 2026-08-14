@@ -29,3 +29,8 @@ DerivedData/
 # Local tooling and notes
 .claude/
 last_session.md
+
+# Working notes for Claude Code. Untracked deliberately: this repo is public, and every edit
+# would publish maintenance notes written for one person. Earlier revisions are still in the
+# history — this stops new ones, it does not retract the old.
+CLAUDE.md
