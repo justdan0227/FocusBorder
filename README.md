@@ -1,11 +1,14 @@
-# Alan
+# FocusBorder
 
 Draws a border around the active window on macOS.
 
-Fork of [Alan](https://github.com/tylerhall/Alan) by [Tyler Hall](https://github.com/tylerhall),
-who wrote the original and everything good about the idea. His note on the upstream repo still
-applies: *"this app is more software satire than useful utility :)"* — this fork just took the
-satire a little too seriously.
+FocusBorder is a fork of [Alan](https://github.com/tylerhall/Alan) by
+[Tyler Hall](https://github.com/tylerhall), who wrote the original and everything good about the
+idea. His note on the upstream repo still applies: *"this app is more software satire than useful
+utility :)"* — this fork just took the satire a little too seriously.
+
+The app itself is still called Alan, and the Xcode project is still `Alan.xcodeproj`. Only the
+repository is renamed, so Tyler's name stays on the thing he actually made.
 
 Upstream is MIT licensed and remains so here; see [LICENSE](LICENSE).
 

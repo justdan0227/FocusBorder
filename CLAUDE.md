@@ -21,16 +21,16 @@ open -a /Applications/Alan.app
 There are no tests and no lint config; `xcodebuild test` will fail (no test target).
 Normal workflow is opening `Alan.xcodeproj` in Xcode and hitting Run.
 
-Signing was re-pointed from the upstream author's team to this machine's, and the bundle id is
-`com.iclassicnu.Alan`, matching the convention in `~/Projects/react_upcheck`. The bundle id had
-to change — automatic signing cannot register upstream's `studio.retina.Alan` under a different
-team. If you pull upstream changes to `project.pbxproj`, expect to re-apply it.
+Signing was re-pointed from the upstream author's team to this fork's, and the bundle id is
+`com.iclassicnu.Alan`. The bundle id had to change — automatic signing cannot register
+upstream's `studio.retina.Alan` under a different team. If you pull upstream changes to
+`project.pbxproj`, expect to re-apply it.
 
-**`DEVELOPMENT_TEAM` is not in `project.pbxproj` and must not go back in** — the repo is
-published, and a committed team id signs every clone with this machine's identity. All four
+**`DEVELOPMENT_TEAM` is not in `project.pbxproj` and must not go back in** — this repo is
+public, and a committed team id signs every clone with the maintainer's identity. All four
 `XCBuildConfiguration` entries carry a `baseConfigurationReference` to `Config/Shared.xcconfig`,
-which `#include?`s the gitignored `Config/Local.xcconfig`; that file holds
-`DEVELOPMENT_TEAM = 4KGAF7A4WR`. `Config/Local.xcconfig.example` documents it for others.
+which `#include?`s the gitignored `Config/Local.xcconfig`; that file holds the team id.
+`Config/Local.xcconfig.example` documents it for others.
 
 The optional-include form matters: a clone with no `Local.xcconfig` still configures and builds
 (verified — it produces an unsigned build, which runs fine but re-triggers the Accessibility
@@ -256,12 +256,13 @@ error handling rather than crashing on an unexpected attribute type.
 
 ## Relationship to upstream
 
-`origin` is `tylerhall/Alan` — the original author's repo, not a fork you can push to. All work
-here is local commits on `main`. Upstream was last seen at `ebdaad7`.
+This repo is **FocusBorder**, a standalone public fork of `tylerhall/Alan`. `origin` is the
+fork; `upstream` is the original author's repo, which is fetch-only — not somewhere you can
+push. Upstream was last seen at `ebdaad7`.
 
 Some commits are **fork-local and must never be sent upstream**:
 
-- `f17569c` (signing) — points `DEVELOPMENT_TEAM` at `4KGAF7A4WR` and renames the bundle to
+- `f17569c` (signing) — repoints `DEVELOPMENT_TEAM` and renames the bundle to
   `com.iclassicnu.Alan`. Upstream this would sign the maintainer's app with the wrong team and
   orphan every existing user's Accessibility grant and preferences domain.
 - `CLAUDE.md` — this file.
