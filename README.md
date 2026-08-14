@@ -48,8 +48,20 @@ No dependencies, no package manager. Open `Alan.xcodeproj` in Xcode and Run, or:
 xcodebuild -project Alan.xcodeproj -scheme Alan -configuration Debug -destination 'platform=macOS' build
 ```
 
-There is no test target. Signing is configured for this fork's development team, so you'll need
-to point `DEVELOPMENT_TEAM` and the bundle identifier at your own before building.
+There is no test target.
+
+A fresh clone builds as-is — no signing setup required. The build is unsigned, which is fine for
+running it locally, though macOS treats each rebuild as a new app and will ask you to grant
+Accessibility permission again.
+
+To sign with your own Apple Developer team, copy the example config and fill in your team id:
+
+```bash
+cp Config/Local.xcconfig.example Config/Local.xcconfig
+```
+
+`Config/Local.xcconfig` is gitignored. No development team is committed to this repo, on purpose
+— a committed `DEVELOPMENT_TEAM` signs every clone with somebody else's identity.
 
 Note that this fork uses the bundle id `com.iclassicnu.Alan` rather than upstream's
 `studio.retina.Alan`, deliberately — it means this build and upstream's can coexist without

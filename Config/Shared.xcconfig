@@ -1,0 +1,14 @@
+// Shared.xcconfig
+// Alan
+//
+// Build settings that are safe to publish. Signing identity deliberately is not:
+// DEVELOPMENT_TEAM is per-developer, and a committed value signs every clone with
+// somebody else's team.
+//
+// Your own team goes in Config/Local.xcconfig, which is gitignored. The include below
+// is optional (`#include?`), so a fresh clone with no Local.xcconfig still configures
+// and builds — it just produces an unsigned build until you supply a team.
+//
+// Config/Local.xcconfig.example shows the one line it needs.
+
+#include? "Local.xcconfig"

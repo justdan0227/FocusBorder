@@ -21,11 +21,23 @@ open -a /Applications/Alan.app
 There are no tests and no lint config; `xcodebuild test` will fail (no test target).
 Normal workflow is opening `Alan.xcodeproj` in Xcode and hitting Run.
 
-Signing was re-pointed from the upstream author's team to this machine's: `DEVELOPMENT_TEAM`
-is `4KGAF7A4WR` (iClassicNu) and the bundle id is `com.iclassicnu.Alan`, matching the
-convention in `~/Projects/react_upcheck`. The bundle id had to change — automatic signing
-cannot register upstream's `studio.retina.Alan` under a different team. If you pull upstream
-changes to `project.pbxproj`, expect to re-apply both.
+Signing was re-pointed from the upstream author's team to this machine's, and the bundle id is
+`com.iclassicnu.Alan`, matching the convention in `~/Projects/react_upcheck`. The bundle id had
+to change — automatic signing cannot register upstream's `studio.retina.Alan` under a different
+team. If you pull upstream changes to `project.pbxproj`, expect to re-apply it.
+
+**`DEVELOPMENT_TEAM` is not in `project.pbxproj` and must not go back in** — the repo is
+published, and a committed team id signs every clone with this machine's identity. All four
+`XCBuildConfiguration` entries carry a `baseConfigurationReference` to `Config/Shared.xcconfig`,
+which `#include?`s the gitignored `Config/Local.xcconfig`; that file holds
+`DEVELOPMENT_TEAM = 4KGAF7A4WR`. `Config/Local.xcconfig.example` documents it for others.
+
+The optional-include form matters: a clone with no `Local.xcconfig` still configures and builds
+(verified — it produces an unsigned build, which runs fine but re-triggers the Accessibility
+grant on every rebuild). Note that xcconfig values lose to build settings written directly into
+the target, so if the team ever reappears in `project.pbxproj` it will silently win over
+`Local.xcconfig` — check there first if signing goes wrong. Changing the team in Xcode's
+Signing & Capabilities UI is exactly what puts it back.
 
 The app is installed to `/Applications/Alan.app` so the Accessibility grant survives
 DerivedData cleans. Running straight out of DerivedData works but the grant is tied to the
