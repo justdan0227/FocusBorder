@@ -37,6 +37,14 @@ sees the newly-signed binary as a different app, so permission must be re-grante
 re-add the app under Privacy & Security → Accessibility). A build that "does nothing" is almost
 always this, not a code bug.
 
+On macOS 27 the grant is keyed to the binary's signature: even with a stale
+`kTCCServiceAccessibility` row still in the system TCC.db (auth_value=2), a rebuilt binary was
+denied at launch (`TCCAccessRequest` → auth_value 0) and quit via the permission alert — remove
+and re-add the app rather than trusting an existing entry. `tccutil reset Accessibility
+com.iclassicnu.Alan` may also clear the stale entry first. The alert's deep link opens the
+universalaccess pane (VoiceOver etc.), not the Privacy & Security → Accessibility permission
+list, so navigate there manually.
+
 ## Architecture
 
 The whole app is four moving parts:
@@ -116,11 +124,12 @@ rounds of guessing into a measurement:
 
 All settings live in `UserDefaults` under the keys in `Constants.swift`, registered with
 defaults in `applicationDidFinishLaunching`. The Preferences window (Alan menu → Preferences…,
-⌘,) exposes all four visual settings: `width` and `inset` as text field + stepper, and
-`lightMode`/`darkMode` as color wells.
+⌘,) exposes all five visual settings: `width`, `inset`, and `hideAfterSeconds` as text field +
+stepper, and `lightMode`/`darkMode` as color wells.
 
-Width and inset are wired with **Cocoa Bindings** to the `userDefaultsController` object in the
-xib (`values.width`, `values.inset`) — not with `@IBAction`/`@IBOutlet`. Grepping
+Width, inset, and hideAfterSeconds are wired with **Cocoa Bindings** to the
+`userDefaultsController` object in the xib (`values.width`, `values.inset`,
+`values.hideAfterSeconds`) — not with `@IBAction`/`@IBOutlet`. Grepping
 `PrefsWindowController.swift` or searching the xib for `action selector=` will therefore make
 them look unimplemented. Only the color wells use actions, because archived `NSColor` needs the
 manual `setColor(_:forKey:)` round-trip that bindings can't do.
@@ -152,12 +161,26 @@ a window changes its bounds on every event, so a bounds-keyed dwell would restar
 forever and never commit — the border would freeze for the whole drag. Staying inside one
 window tracks it live; only switching windows waits.
 
+**Hide after (seconds)** (`hideAfterSeconds`, default 5, 0 = never) auto-hides the border in
+focus mode once the focused window has held focus that long. A one-shot `hideTimer` is armed
+once per target change — frame-only reapplies (AX move/resize, the 0.5s fallback, drag
+samples) never re-arm it. On fire, `hideHighlight()` hides the border and nils
+`lastFrame`/`lastAXFrame` (which also makes `forceUpdate()` a no-op while hidden). It stays
+hidden until focus moves to a *different* window: `suppressedWindow` is compared with
+`CFEqual` in `updateFrame(from:raise:)`, and cleared on target change, focus loss, drag start,
+and `modeChanged()`. Drags cancel the pending timer and any suppression so the border never
+vanishes mid-drag; `endDragSampling -> refreshTarget()` re-shows and re-arms on mouse-up.
+Setting the pref to 0 mid-countdown is honored at fire time (the border stays). Hover mode is
+completely unaffected.
+
 Adding a row to the prefs grid means adding a `gridRow` plus one `gridCell` per column (three),
 even for empty cells, and growing the window's `contentRect` — the window is not resizable, so
 a too-short window silently clips the new row.
 
 The steppers are constrained to `1...20` to match the clamp in `HighlightView.draw`. If you
 change that clamp, change `minValue`/`maxValue` on both `stepperCell`s in the xib to match.
+The `hideAfterSeconds` stepper is the exception: `0...60` (0 = never hide), and not tied to the
+draw clamp.
 The paired text fields are *not* constrained — their `numberFormatter` has no minimum or
 maximum, so a typed value outside `1...20` is still written to `UserDefaults` and then silently
 clamped at draw time.
