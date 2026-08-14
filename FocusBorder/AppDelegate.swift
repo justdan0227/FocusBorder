@@ -34,8 +34,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             Key.hotKeyModifiers: Int(Shortcut.defaultToggle.modifiers.rawValue)
         ])
 
-        configureColorPanel()
-
         applyDockVisibility()
         applyMenuBarVisibility()
 
@@ -48,15 +46,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         requestAccessibilityPermissionIfNeeded()
 
         FocusHighlighter.shared.start()
-    }
-
-    // Restricts the shared color panel to the crayon (basic colors) picker. Must run before
-    // anything touches NSColorPanel.shared — setPickerMask is only honored while the panel has
-    // yet to be created, which is why this lives at launch and not in the Preferences window.
-    private func configureColorPanel() {
-        NSColorPanel.setPickerMask(.crayonModeMask)
-        NSColorPanel.setPickerMode(.crayon)
-        NSColorPanel.shared.showsAlpha = false
     }
 
     // Re-reads the shortcut preference and re-registers. Called at launch and whenever the

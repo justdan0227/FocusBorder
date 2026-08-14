@@ -7,10 +7,10 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="PrefsWindowController" customModule="FocusBorder" customModuleProvider="target">
             <connections>
-                <outlet property="darkModeColorWell" destination="Jxj-8q-f3z" id="rlQ-f2-vdS"/>
+                <outlet property="darkModeSwatches" destination="Jxj-8q-f3z" id="rlQ-f2-vdS"/>
                 <outlet property="hideDockCheckbox" destination="hd1-ck-box" id="hd2-ou-tlt"/>
                 <outlet property="hoverCheckbox" destination="hv1-ck-box" id="hv2-ou-tlt"/>
-                <outlet property="lightModeColorWell" destination="a3u-bc-pli" id="gs0-l4-XRK"/>
+                <outlet property="lightModeSwatches" destination="a3u-bc-pli" id="gs0-l4-XRK"/>
                 <outlet property="menuBarIconCheckbox" destination="mb1-ck-box" id="mb2-ou-tlt"/>
                 <outlet property="shortcutButton" destination="sc1-bt-rec" id="sc2-ou-tlt"/>
                 <outlet property="window" destination="QvC-M9-y7g" id="tgm-uC-mjt"/>
@@ -20,14 +20,14 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window identifier="PrefsWindowController" title="FocusBorder" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" frameAutosaveName="PrefsWindowController" animationBehavior="default" id="QvC-M9-y7g">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
-            <rect key="contentRect" x="196" y="240" width="470" height="377"/>
+            <rect key="contentRect" x="196" y="240" width="470" height="421"/>
             <rect key="screenRect" x="0.0" y="0.0" width="2880" height="1595"/>
             <view key="contentView" wantsLayer="YES" id="EiT-Mj-1SZ">
-                <rect key="frame" x="0.0" y="0.0" width="470" height="377"/>
+                <rect key="frame" x="0.0" y="0.0" width="470" height="421"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <gridView xPlacement="leading" yPlacement="bottom" rowAlignment="none" translatesAutoresizingMaskIntoConstraints="NO" id="fhS-ed-gPi">
-                        <rect key="frame" x="105" y="60" width="290" height="256"/>
+                        <rect key="frame" x="105" y="60" width="290" height="300"/>
                         <rows>
                             <gridRow rowAlignment="firstBaseline" id="7Vg-m1-wed"/>
                             <gridRow rowAlignment="firstBaseline" id="3Pg-Pm-pEX"/>
@@ -126,13 +126,9 @@
                                 </textField>
                             </gridCell>
                             <gridCell row="4Oy-mE-p0P" column="WUf-1y-4w5" id="k1y-3S-jzz">
-                                <colorWell key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="a3u-bc-pli">
-                                    <rect key="frame" x="84" y="28" width="44" height="28"/>
-                                    <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                                    <connections>
-                                        <action selector="lightModeChanged:" target="-2" id="Sdk-2o-DtA"/>
-                                    </connections>
-                                </colorWell>
+                                <customView key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="a3u-bc-pli" customClass="ColorSwatchPicker" customModule="FocusBorder" customModuleProvider="target">
+                                    <rect key="frame" x="84" y="22" width="162" height="50"/>
+                                </customView>
                             </gridCell>
                             <gridCell row="4Oy-mE-p0P" column="L2g-Pd-kyh" id="rzs-Ur-8w2"/>
                             <gridCell row="1ea-ym-QQh" column="SwQ-Kz-8BL" id="8EF-5Q-tVA">
@@ -146,13 +142,9 @@
                                 </textField>
                             </gridCell>
                             <gridCell row="1ea-ym-QQh" column="WUf-1y-4w5" id="owX-PM-YbN">
-                                <colorWell key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="Jxj-8q-f3z">
-                                    <rect key="frame" x="84" y="-2" width="44" height="28"/>
-                                    <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                                    <connections>
-                                        <action selector="darkModeChanged:" target="-2" id="NIZ-Ey-2gA"/>
-                                    </connections>
-                                </colorWell>
+                                <customView key="contentView" translatesAutoresizingMaskIntoConstraints="NO" id="Jxj-8q-f3z" customClass="ColorSwatchPicker" customModule="FocusBorder" customModuleProvider="target">
+                                    <rect key="frame" x="84" y="-36" width="162" height="50"/>
+                                </customView>
                             </gridCell>
                             <gridCell row="1ea-ym-QQh" column="L2g-Pd-kyh" id="yqa-5A-7mf"/>
                             <gridCell row="mb0-ro-wid" column="SwQ-Kz-8BL" id="mb3-ce-lla"/>
